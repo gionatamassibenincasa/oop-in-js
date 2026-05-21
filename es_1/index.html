@@ -8,14 +8,23 @@
         :root {
             --bg-color: #f4f4f9;
             --panel-bg: #ffffff;
-            --bluej-orange: #f39c12;
             --bluej-blue: #3498db;
             --text-color: #2c3e50;
             --border-color: #bdc3c7;
+            --muted-color: #6b7280;
+            --console-bg: #111827;
+            --console-text: #e5e7eb;
+            --console-command: #93c5fd;
+            --console-error: #fca5a5;
+            --console-success: #86efac;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -23,7 +32,6 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            box-sizing: border-box;
         }
 
         header {
@@ -35,44 +43,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
 
-        h1 { margin: 0; font-size: 1.5rem; }
+        h1, h3, h4 {
+            margin: 0;
+        }
 
         #main-container {
             display: flex;
             flex: 1;
             gap: 20px;
-            overflow: hidden;
             min-height: 0;
         }
 
-        /* Area di Progetto (Stile BlueJ) */
         #project-space {
             flex: 2;
             background-color: #eaeaea;
             border: 2px solid var(--border-color);
             border-radius: 8px;
             padding: 20px;
-            position: relative;
             display: flex;
             flex-direction: column;
             min-height: 0;
         }
 
         .diagram-area {
-            flex: 2;
+            flex: 1;
             min-height: 320px;
             border: 1px dashed #95a5a6;
             background-color: #fafafa;
             border-radius: 6px;
             position: relative;
-            margin-bottom: 20px;
+            margin: 10px 0 20px;
         }
 
         .class-box {
-            width: 120px;
-            height: 80px;
+            width: 140px;
+            height: 90px;
             background: linear-gradient(135deg, #fff2cc, #fcd975);
             border: 2px solid #b45f06;
             border-radius: 4px;
@@ -83,13 +91,17 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            box-shadow: 3px 3px 5px rgba(0,0,0,0.1);
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
             cursor: pointer;
         }
 
-        /* Banco degli Oggetti (Object Bench) */
+        .hint {
+            color: var(--muted-color);
+            font-size: 0.92rem;
+            margin: 0;
+        }
+
         #object-bench {
-            flex: 1;
             background-color: #d5dbdb;
             border-top: 3px double #7f8c8d;
             padding: 10px;
@@ -97,26 +109,42 @@
             gap: 15px;
             align-items: center;
             overflow-x: auto;
-            min-height: 100px;
+            min-height: 110px;
         }
 
         .object-red-canvas {
-            display: inline-block;
-            width: 100px;
-            height: 60px;
+            display: inline-flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 120px;
+            min-width: 120px;
+            height: 66px;
             background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             border-radius: 6px;
-            padding: 5px;
-            font-size: 0.8rem;
+            padding: 6px 8px;
+            font-size: 0.82rem;
             cursor: context-menu;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            position: relative;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            border: 2px solid transparent;
         }
 
-        /* Pannello di Controllo e Ispezione */
+        .object-red-canvas.selected {
+            border-color: #1d4ed8;
+        }
+
+        .object-label {
+            font-weight: 700;
+        }
+
+        .object-kind {
+            opacity: 0.9;
+            font-size: 0.72rem;
+        }
+
         #sidebar {
             flex: 1;
+            min-width: 360px;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -125,7 +153,6 @@
             flex-direction: column;
             gap: 15px;
             overflow: hidden;
-            min-width: 340px;
             min-height: 0;
         }
 
@@ -140,20 +167,164 @@
             min-height: 0;
         }
 
-        .sidebar-section h3 {
-            margin: 0;
-        }
-
         .details-section {
             flex: 1;
         }
 
-        /* Menu contestuale simulato */
+        #world-display {
+            width: 100%;
+            height: 240px;
+            min-height: 240px;
+            max-height: 240px;
+            background-color: #222;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .visual-object {
+            position: absolute;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        .inspector-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .inspector-table th,
+        .inspector-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+
+        #inspector,
+        #json-viewer {
+            flex: 1;
+            min-height: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        #json-viewer {
+            margin: 0;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+
+        #console-panel {
+            margin-top: 20px;
+            background-color: var(--console-bg);
+            color: var(--console-text);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+            gap: 10px;
+        }
+
+        #console-help {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            margin: 0;
+        }
+
+        #console-output {
+            flex: 1;
+            overflow-y: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.92rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 6px;
+            padding: 10px;
+            background-color: rgba(15, 23, 42, 0.55);
+        }
+
+        .console-entry {
+            border-left: 3px solid var(--bluej-blue);
+            padding-left: 10px;
+            white-space: pre-wrap;
+        }
+
+        .console-entry.command {
+            border-left-color: var(--console-command);
+        }
+
+        .console-entry.error {
+            border-left-color: var(--console-error);
+        }
+
+        .console-entry.success {
+            border-left-color: var(--console-success);
+        }
+
+        .console-time {
+            color: #93c5fd;
+            margin-right: 8px;
+        }
+
+        #console-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #console-prompt {
+            font-family: "Courier New", Courier, monospace;
+            color: var(--console-command);
+        }
+
+        #console-input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #64748b;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.95rem;
+        }
+
+        #run-command {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--bluej-blue);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .example-button {
+            border: 1px solid #475569;
+            background-color: transparent;
+            color: #e2e8f0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
         .context-menu {
             position: absolute;
             background: white;
             border: 1px solid #ccc;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
             display: none;
             z-index: 100;
             list-style: none;
@@ -172,108 +343,35 @@
             color: white;
         }
 
-        /* Schermo di output (Il Canvas del Mondo) */
-        #world-display {
-            width: 100%;
-            height: 240px;
-            min-height: 240px;
-            max-height: 240px;
-            background-color: #222;
-            border-radius: 6px;
-            position: relative;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
+        @media (max-width: 1100px) {
+            #main-container {
+                flex-direction: column;
+            }
 
-        .visual-object {
-            position: absolute;
-            transition: all 0.3s ease;
-        }
-
-        .inspector-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        .inspector-table th, .inspector-table td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-        }
-
-        #inspector, #json-viewer {
-            flex: 1;
-            min-height: 0;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            overflow: auto;
-        }
-
-        #json-viewer {
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-        }
-
-        #console-panel {
-            margin-top: 20px;
-            background-color: #111827;
-            color: #e5e7eb;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            min-height: 160px;
-        }
-
-        #console-panel h3 {
-            margin: 0 0 10px 0;
-        }
-
-        #console-output {
-            flex: 1;
-            overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .console-entry {
-            border-left: 3px solid var(--bluej-blue);
-            padding-left: 10px;
-            white-space: pre-wrap;
-        }
-
-        .console-time {
-            color: #93c5fd;
-            margin-right: 8px;
+            #sidebar {
+                min-width: 0;
+            }
         }
     </style>
 </head>
 <body>
-
     <header>
-        <h1>BlueJS — L'approccio "Objects First" in JavaScript</h1>
+        <h1>BlueJS - L'approccio "Objects First" in JavaScript</h1>
         <div>Esercizio 1: Il cerchio magico</div>
     </header>
 
     <div id="main-container">
         <div id="project-space">
-            <h4 style="margin:0 0 10px 0;">Diagramma delle Classi (Fai click destro sulla classe per creare un oggetto)</h4>
+            <h4>Diagramma delle Classi</h4>
+            <p class="hint">Click o click destro su <code>Circle</code> per creare un oggetto automatico, oppure usa la console con <code>const</code> e <code>let</code>.</p>
             <div class="diagram-area">
-                <div class="class-box" id="class-circle" onclick="showClassMenu(event)">
+                <div class="class-box" id="class-circle" onclick="showClassMenu(event)" oncontextmenu="showClassMenu(event)">
                     Circle
                 </div>
             </div>
-            
-            <h4 style="margin:0 0 5px 0;">Banco degli Oggetti (Object Bench)</h4>
-            <div id="object-bench">
-                </div>
+
+            <h4>Banco degli Oggetti (Object Bench)</h4>
+            <div id="object-bench"></div>
         </div>
 
         <div id="sidebar">
@@ -285,179 +383,420 @@
             <div class="sidebar-section details-section">
                 <h3>Ispettore Oggetto</h3>
                 <div id="inspector">
-                    <p style="color: #7f8c8d; font-style: italic;">Seleziona un oggetto dal banco per ispezionare il suo stato.</p>
+                    <p style="color: #7f8c8d; font-style: italic;">Seleziona un oggetto dal banco o dalla console per ispezionarne lo stato.</p>
                 </div>
             </div>
 
             <div class="sidebar-section details-section">
                 <h3>JSON Oggetto</h3>
-                <pre id="json-viewer">Seleziona un oggetto dal banco per visualizzarne il JSON.</pre>
+                <pre id="json-viewer">Seleziona un oggetto per visualizzarne il JSON.</pre>
             </div>
         </div>
     </div>
 
     <section id="console-panel">
-        <h3>Console eventi</h3>
+        <h3>Console JavaScript</h3>
+        <p id="console-help">Un comando per volta. Sintassi supportata: <code>const nome = new Circle();</code>, <code>let nome = new Circle();</code>, <code>nome.metodo();</code>, <code>nome</code>, <code>nome = new Circle();</code> solo se <code>nome</code> e stato dichiarato con <code>let</code>.</p>
         <div id="console-output"></div>
+        <div id="console-input-row">
+            <span id="console-prompt">&gt;</span>
+            <input id="console-input" type="text" autocomplete="off" spellcheck="false" placeholder="Esempio: const c = new Circle();">
+            <button id="run-command" type="button">Esegui</button>
+        </div>
+        <div id="examples">
+            <button class="example-button" type="button" data-command="const c = new Circle();">const c = new Circle();</button>
+            <button class="example-button" type="button" data-command="c.makeVisible();">c.makeVisible();</button>
+            <button class="example-button" type="button" data-command="c.moveRight();">c.moveRight();</button>
+            <button class="example-button" type="button" data-command="c.changeColor();">c.changeColor();</button>
+            <button class="example-button" type="button" data-command="c">c</button>
+        </div>
     </section>
 
     <ul id="class-menu" class="context-menu">
-        <li onclick="createInstance()">new Circle()</li>
+        <li onclick="createAutoInstance()">new Circle()</li>
     </ul>
 
     <ul id="object-menu" class="context-menu">
-        <li onclick="invokeMethod('makeVisible')">makeVisible()</li>
-        <li onclick="invokeMethod('makeInvisible')">makeInvisible()</li>
-        <li onclick="invokeMethod('moveRight')">moveRight()</li>
-        <li onclick="invokeMethod('moveLeft')">moveLeft()</li>
-        <li onclick="invokeMethod('changeColor')">changeColor()</li>
+        <li onclick="invokeMethodFromMenu('makeVisible')">makeVisible()</li>
+        <li onclick="invokeMethodFromMenu('makeInvisible')">makeInvisible()</li>
+        <li onclick="invokeMethodFromMenu('moveRight')">moveRight()</li>
+        <li onclick="invokeMethodFromMenu('moveLeft')">moveLeft()</li>
+        <li onclick="invokeMethodFromMenu('changeColor')">changeColor()</li>
     </ul>
 
     <script>
-        // Definizione interna della classe logica
-        class Circle {
+        const ALLOWED_METHODS = new Set([
+            "makeVisible",
+            "makeInvisible",
+            "moveRight",
+            "moveLeft",
+            "changeColor"
+        ]);
+
+        const instances = Object.create(null);
+        const bindings = new Map();
+        const bindingKinds = new Map();
+        const subscriptions = new Map();
+        let objectCounter = 1;
+        let selectedObjectName = null;
+
+        class ObservableModel {
+            constructor() {
+                this.listeners = new Set();
+            }
+
+            subscribe(listener) {
+                this.listeners.add(listener);
+                return () => {
+                    this.listeners.delete(listener);
+                };
+            }
+
+            notifyObservers(payload) {
+                for (const listener of this.listeners) {
+                    listener(payload);
+                }
+            }
+        }
+
+        class Circle extends ObservableModel {
             constructor(name) {
+                super();
                 this.name = name;
                 this.diameter = 40;
                 this.xPosition = 20;
                 this.yPosition = 60;
-                this.color = 'blue';
+                this.color = "blue";
                 this.isVisible = false;
             }
-            makeVisible() { this.isVisible = true; }
-            makeInvisible() { this.isVisible = false; }
-            moveRight() { this.xPosition += 30; }
-            moveLeft() { this.xPosition -= 30; }
+
+            makeVisible() {
+                this.isVisible = true;
+                this.notifyObservers({ type: "state-changed", instanceName: this.name });
+            }
+
+            makeInvisible() {
+                this.isVisible = false;
+                this.notifyObservers({ type: "state-changed", instanceName: this.name });
+            }
+
+            moveRight() {
+                this.xPosition += 30;
+                this.notifyObservers({ type: "state-changed", instanceName: this.name });
+            }
+
+            moveLeft() {
+                this.xPosition = Math.max(0, this.xPosition - 30);
+                this.notifyObservers({ type: "state-changed", instanceName: this.name });
+            }
+
             changeColor() {
-                const colors = ['blue', 'red', 'green', 'yellow', 'magenta'];
-                let nextIdx = (colors.indexOf(this.color) + 1) % colors.length;
-                this.color = colors[nextIdx];
+                const colors = ["blue", "red", "green", "yellow", "magenta"];
+                const nextIndex = (colors.indexOf(this.color) + 1) % colors.length;
+                this.color = colors[nextIndex];
+                this.notifyObservers({ type: "state-changed", instanceName: this.name });
             }
         }
 
-        // Stato dell'applicazione
-        const instances = {};
-        let objectCounter = 1;
-        let selectedObjectName = null;
-        const consoleEntries = [];
+        function logOutput(message, type = "info") {
+            const output = document.getElementById("console-output");
+            const entry = document.createElement("div");
+            const time = document.createElement("span");
 
-        function logEvent(message) {
-            consoleEntries.push({
-                time: new Date().toLocaleTimeString('it-IT'),
-                message
+            entry.className = `console-entry ${type}`;
+            time.className = "console-time";
+            time.textContent = `[${new Date().toLocaleTimeString("it-IT")}]`;
+
+            entry.appendChild(time);
+            entry.appendChild(document.createTextNode(message));
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function nextAutomaticName() {
+            while (bindings.has(`circle${objectCounter}`)) {
+                objectCounter += 1;
+            }
+
+            const name = `circle${objectCounter}`;
+            objectCounter += 1;
+            return name;
+        }
+
+        function subscribeInstance(name, instance) {
+            if (subscriptions.has(name)) {
+                subscriptions.get(name)();
+            }
+
+            const unsubscribe = instance.subscribe(() => {
+                renderWorld();
+                if (selectedObjectName === name) {
+                    inspectObject(name);
+                }
             });
 
-            if (consoleEntries.length > 50) {
-                consoleEntries.shift();
-            }
-
-            const consoleOutput = document.getElementById('console-output');
-            consoleOutput.innerHTML = consoleEntries.map((entry) =>
-                `<div class="console-entry"><span class="console-time">[${entry.time}]</span>${entry.message}</div>`
-            ).join('');
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            subscriptions.set(name, unsubscribe);
         }
 
-        // Gestione Menu Classi
-        function showClassMenu(e) {
-            e.preventDefault();
-            const menu = document.getElementById('class-menu');
-            menu.style.display = 'block';
-            menu.style.top = `${e.pageY}px`;
-            menu.style.left = `${e.pageX}px`;
-            e.stopPropagation();
-        }
-
-        function createInstance() {
-            const name = `circle${objectCounter++}`;
-            instances[name] = new Circle(name);
+        function storeInstance(kind, name, instance) {
+            bindings.set(name, instance);
+            bindingKinds.set(name, kind);
+            instances[name] = instance;
+            subscribeInstance(name, instance);
+            selectedObjectName = name;
             renderObjectBench();
-            updateWorld();
+            renderWorld();
             inspectObject(name);
-            logEvent(`Creato ${name} come istanza di Circle.`);
-            hideMenus();
         }
 
-        // Renderizzare il banco degli oggetti
-        function renderObjectBench() {
-            const bench = document.getElementById('object-bench');
-            bench.innerHTML = '';
-            for (let key in instances) {
-                const div = document.createElement('div');
-                div.className = 'object-red-canvas';
-                div.innerText = `${key}: Circle`;
-                div.oncontextmenu = (e) => showObjectMenu(e, key);
-                div.onclick = () => inspectObject(key);
-                bench.appendChild(div);
+        function declareInstance(kind, name) {
+            if (bindings.has(name)) {
+                throw new Error(`SyntaxError: Identifier '${name}' has already been declared.`);
             }
+
+            const instance = new Circle(name);
+            storeInstance(kind, name, instance);
+            logOutput(`${kind} ${name} = new Circle();`, "success");
         }
 
-        function showObjectMenu(e, objName) {
-            e.preventDefault();
-            selectedObjectName = objName;
-            const menu = document.getElementById('object-menu');
-            menu.style.display = 'block';
-            menu.style.top = `${e.pageY}px`;
-            menu.style.left = `${e.pageX}px`;
-            e.stopPropagation();
-        }
-
-        function invokeMethod(methodName) {
-            if (selectedObjectName && instances[selectedObjectName]) {
-                instances[selectedObjectName][methodName]();
-                updateWorld();
-                inspectObject(selectedObjectName);
-                logEvent(`Invocato ${selectedObjectName}.${methodName}().`);
+        function reassignInstance(name) {
+            if (!bindings.has(name)) {
+                throw new Error(`ReferenceError: '${name}' is not defined.`);
             }
-            hideMenus();
+
+            if (bindingKinds.get(name) === "const") {
+                throw new Error("TypeError: Assignment to constant variable.");
+            }
+
+            const instance = new Circle(name);
+            storeInstance("let", name, instance);
+            logOutput(`${name} = new Circle();`, "success");
+        }
+
+        function executeMethod(name, methodName, sourceLabel) {
+            if (!bindings.has(name)) {
+                throw new Error(`ReferenceError: '${name}' is not defined.`);
+            }
+
+            if (!ALLOWED_METHODS.has(methodName)) {
+                throw new Error(`Error: Unknown method '${methodName}'.`);
+            }
+
+            selectedObjectName = name;
+            renderObjectBench();
+            bindings.get(name)[methodName]();
+            inspectObject(name);
+            logOutput(`${sourceLabel}: ${name}.${methodName}();`, "success");
         }
 
         function inspectObject(name) {
-            selectedObjectName = name;
-            const obj = instances[name];
-            const inspector = document.getElementById('inspector');
-            const jsonViewer = document.getElementById('json-viewer');
-            if(!obj) return;
+            const obj = bindings.get(name);
+            const inspector = document.getElementById("inspector");
+            const jsonViewer = document.getElementById("json-viewer");
 
-            let html = `<strong>Oggetto:</strong> ${obj.name}<br><br>`;
+            if (!obj) {
+                return;
+            }
+
+            selectedObjectName = name;
+            renderObjectBench();
+
+            let html = `<strong>Oggetto:</strong> ${obj.name}<br><strong>Dichiarazione:</strong> ${bindingKinds.get(name)}<br><br>`;
             html += `<table class="inspector-table">
-                <tr><th>Campo (Stato)</th><th>Valore</th></tr>
+                <tr><th>Campo (stato)</th><th>Valore</th></tr>
                 <tr><td>diameter</td><td>${obj.diameter}</td></tr>
                 <tr><td>xPosition</td><td>${obj.xPosition}</td></tr>
                 <tr><td>yPosition</td><td>${obj.yPosition}</td></tr>
                 <tr><td>color</td><td><span style="color:${obj.color}">●</span> ${obj.color}</td></tr>
                 <tr><td>isVisible</td><td>${obj.isVisible}</td></tr>
             </table>`;
+
             inspector.innerHTML = html;
             jsonViewer.textContent = JSON.stringify(obj, null, 2);
         }
 
-        function updateWorld() {
-            const world = document.getElementById('world-display');
-            world.innerHTML = '';
-            for (let key in instances) {
-                const obj = instances[key];
-                if (obj.isVisible) {
-                    const el = document.createElement('div');
-                    el.className = 'visual-object';
-                    el.style.width = `${obj.diameter}px`;
-                    el.style.height = `${obj.diameter}px`;
-                    el.style.backgroundColor = obj.color;
-                    el.style.borderRadius = '50%';
-                    el.style.left = `${obj.xPosition}px`;
-                    el.style.top = `${obj.yPosition}px`;
-                    world.appendChild(el);
-                }
+        function renderObjectBench() {
+            const bench = document.getElementById("object-bench");
+            const names = Array.from(bindings.keys());
+
+            bench.innerHTML = "";
+
+            if (names.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "hint";
+                empty.textContent = "Nessun oggetto creato. Usa la console oppure la classe Circle.";
+                bench.appendChild(empty);
+                return;
+            }
+
+            for (const name of names) {
+                const item = document.createElement("div");
+                const label = document.createElement("div");
+                const kind = document.createElement("div");
+
+                item.className = "object-red-canvas" + (selectedObjectName === name ? " selected" : "");
+                label.className = "object-label";
+                kind.className = "object-kind";
+
+                label.textContent = `${name}: Circle`;
+                kind.textContent = `binding: ${bindingKinds.get(name)}`;
+
+                item.oncontextmenu = (event) => showObjectMenu(event, name);
+                item.onclick = () => {
+                    inspectObject(name);
+                    logOutput(`Ispezione di ${name}.`, "info");
+                };
+
+                item.appendChild(label);
+                item.appendChild(kind);
+                bench.appendChild(item);
             }
         }
 
+        function renderWorld() {
+            const world = document.getElementById("world-display");
+            world.innerHTML = "";
+
+            for (const name of bindings.keys()) {
+                const obj = bindings.get(name);
+                if (!obj.isVisible) {
+                    continue;
+                }
+
+                const element = document.createElement("div");
+                element.className = "visual-object";
+                element.title = name;
+                element.style.width = `${obj.diameter}px`;
+                element.style.height = `${obj.diameter}px`;
+                element.style.backgroundColor = obj.color;
+                element.style.borderRadius = "50%";
+                element.style.left = `${obj.xPosition}px`;
+                element.style.top = `${obj.yPosition}px`;
+                world.appendChild(element);
+            }
+        }
+
+        function showClassMenu(event) {
+            event.preventDefault();
+            const menu = document.getElementById("class-menu");
+            hideMenus();
+            menu.style.display = "block";
+            menu.style.top = `${event.pageY}px`;
+            menu.style.left = `${event.pageX}px`;
+            event.stopPropagation();
+        }
+
+        function showObjectMenu(event, objectName) {
+            event.preventDefault();
+            selectedObjectName = objectName;
+            renderObjectBench();
+            const menu = document.getElementById("object-menu");
+            hideMenus();
+            menu.style.display = "block";
+            menu.style.top = `${event.pageY}px`;
+            menu.style.left = `${event.pageX}px`;
+            event.stopPropagation();
+        }
+
         function hideMenus() {
-            document.getElementById('class-menu').style.display = 'none';
-            document.getElementById('object-menu').style.display = 'none';
+            document.getElementById("class-menu").style.display = "none";
+            document.getElementById("object-menu").style.display = "none";
+        }
+
+        function createAutoInstance() {
+            const name = nextAutomaticName();
+            declareInstance("let", name);
+            hideMenus();
+        }
+
+        function invokeMethodFromMenu(methodName) {
+            if (selectedObjectName) {
+                executeMethod(selectedObjectName, methodName, "menu");
+            }
+            hideMenus();
+        }
+
+        function executeConsoleStatement(rawInput) {
+            const input = rawInput.trim();
+
+            if (!input) {
+                return;
+            }
+
+            if (input.includes("\n")) {
+                throw new Error("Esegui un solo comando per volta.");
+            }
+
+            logOutput(`> ${input}`, "command");
+
+            const normalized = input.endsWith(";") ? input.slice(0, -1).trim() : input;
+            if (normalized.includes(";")) {
+                throw new Error("Esegui un solo comando per volta.");
+            }
+
+            let match = normalized.match(/^(const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*new\s+Circle\s*\(\s*\)$/);
+            if (match) {
+                declareInstance(match[1], match[2]);
+                return;
+            }
+
+            match = normalized.match(/^([A-Za-z_$][\w$]*)\s*=\s*new\s+Circle\s*\(\s*\)$/);
+            if (match) {
+                reassignInstance(match[1]);
+                return;
+            }
+
+            match = normalized.match(/^([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(\s*\)$/);
+            if (match) {
+                executeMethod(match[1], match[2], "console");
+                return;
+            }
+
+            match = normalized.match(/^([A-Za-z_$][\w$]*)$/);
+            if (match) {
+                if (!bindings.has(match[1])) {
+                    throw new Error(`ReferenceError: '${match[1]}' is not defined.`);
+                }
+                inspectObject(match[1]);
+                logOutput(`${match[1]} -> oggetto selezionato nell'interfaccia.`, "info");
+                return;
+            }
+
+            throw new Error("Sintassi non supportata. Usa dichiarazioni con const/let, new Circle(), chiamate di metodo o il nome di una variabile.");
+        }
+
+        function runConsoleCommand() {
+            const input = document.getElementById("console-input");
+
+            try {
+                executeConsoleStatement(input.value);
+            } catch (error) {
+                logOutput(error.message, "error");
+            }
+
+            input.value = "";
+            input.focus();
+        }
+
+        document.getElementById("run-command").addEventListener("click", runConsoleCommand);
+        document.getElementById("console-input").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                runConsoleCommand();
+            }
+        });
+
+        for (const button of document.querySelectorAll("[data-command]")) {
+            button.addEventListener("click", () => {
+                document.getElementById("console-input").value = button.dataset.command;
+                document.getElementById("console-input").focus();
+            });
         }
 
         window.onclick = hideMenus;
-        logEvent('Simulatore pronto.');
+
+        renderObjectBench();
+        renderWorld();
+        logOutput("Simulatore pronto. Prova: const c = new Circle();", "info");
     </script>
 </body>
 </html>
