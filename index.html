@@ -205,8 +205,18 @@
                     <h2 id="content-title">Contenuti disponibili</h2>
                 </div>
                 <div class="panel-body">
-                    <p id="content-status" class="meta">Caricamento dei contenuti del repository...</p>
-                    <ul id="content-list" class="content-list"></ul>
+                    <p id="content-status" class="meta">Contenuti disponibili. La pagina prova anche a rilevare automaticamente nuovi file dal repository.</p>
+                    <ul id="content-list" class="content-list">
+                        <li class="content-item">
+                            <h3>es_1</h3>
+                            <p class="meta">Pagina HTML disponibile • 1 file Markdown</p>
+                            <div class="actions">
+                                <a class="link-button" href="./es_1/index.html">Apri pagina HTML</a>
+                                <button class="link-button" type="button" data-md-path="./es_1/esercizio.md">Leggi esercizio.md</button>
+                                <a class="secondary-link" href="./es_1/esercizio.md">Apri .md originale</a>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </section>
 
@@ -223,7 +233,6 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         const contentList = document.getElementById("content-list");
         const contentStatus = document.getElementById("content-status");
@@ -234,6 +243,160 @@
             "es_1/index.html",
             "es_1/esercizio.md"
         ];
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function renderInline(text) {
+            let html = escapeHtml(text);
+            html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+            html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+            html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+            return html;
+        }
+
+        function splitMarkdownRow(line) {
+            return line
+                .trim()
+                .replace(/^\|/, "")
+                .replace(/\|$/, "")
+                .split("|")
+                .map((cell) => renderInline(cell.trim()));
+        }
+
+        function renderMarkdown(markdown) {
+            const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+            const html = [];
+            let paragraph = [];
+            let listType = null;
+            let listItems = [];
+
+            function flushParagraph() {
+                if (paragraph.length > 0) {
+                    html.push("<p>" + renderInline(paragraph.join(" ")) + "</p>");
+                    paragraph = [];
+                }
+            }
+
+            function flushList() {
+                if (listType && listItems.length > 0) {
+                    html.push("<" + listType + ">" + listItems.join("") + "</" + listType + ">");
+                }
+                listType = null;
+                listItems = [];
+            }
+
+            for (let i = 0; i < lines.length; i += 1) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                if (!trimmed) {
+                    flushParagraph();
+                    flushList();
+                    continue;
+                }
+
+                if (/^```/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+
+                    const codeLines = [];
+                    i += 1;
+                    while (i < lines.length && !/^```/.test(lines[i].trim())) {
+                        codeLines.push(escapeHtml(lines[i]));
+                        i += 1;
+                    }
+
+                    html.push("<pre><code>" + codeLines.join("\n") + "</code></pre>");
+                    continue;
+                }
+
+                if (/^\|/.test(trimmed) && i + 1 < lines.length && /^\s*\|?[:\- ]+\|[:\-| ]*\s*$/.test(lines[i + 1])) {
+                    flushParagraph();
+                    flushList();
+
+                    const headerCells = splitMarkdownRow(line);
+                    const bodyRows = [];
+                    i += 2;
+
+                    while (i < lines.length && /^\|/.test(lines[i].trim())) {
+                        const rowCells = splitMarkdownRow(lines[i]);
+                        bodyRows.push("<tr>" + rowCells.map((cell) => "<td>" + cell + "</td>").join("") + "</tr>");
+                        i += 1;
+                    }
+
+                    i -= 1;
+                    html.push(
+                        "<table><thead><tr>" +
+                        headerCells.map((cell) => "<th>" + cell + "</th>").join("") +
+                        "</tr></thead><tbody>" +
+                        bodyRows.join("") +
+                        "</tbody></table>"
+                    );
+                    continue;
+                }
+
+                const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+                if (headingMatch) {
+                    flushParagraph();
+                    flushList();
+                    const level = headingMatch[1].length;
+                    html.push("<h" + level + ">" + renderInline(headingMatch[2]) + "</h" + level + ">");
+                    continue;
+                }
+
+                if (/^-{3,}$/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    html.push("<hr>");
+                    continue;
+                }
+
+                if (/^>\s?/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    html.push("<blockquote><p>" + renderInline(trimmed.replace(/^>\s?/, "")) + "</p></blockquote>");
+                    continue;
+                }
+
+                const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
+                if (orderedMatch) {
+                    flushParagraph();
+                    if (listType && listType !== "ol") {
+                        flushList();
+                    }
+                    listType = "ol";
+                    listItems.push("<li>" + renderInline(orderedMatch[1]) + "</li>");
+                    continue;
+                }
+
+                const unorderedMatch = trimmed.match(/^[-*]\s+(.*)$/);
+                if (unorderedMatch) {
+                    flushParagraph();
+                    if (listType && listType !== "ul") {
+                        flushList();
+                    }
+                    listType = "ul";
+                    listItems.push("<li>" + renderInline(unorderedMatch[1]) + "</li>");
+                    continue;
+                }
+
+                flushList();
+                paragraph.push(trimmed);
+            }
+
+            flushParagraph();
+            flushList();
+
+            return html.join("");
+        }
 
         function getRepositoryInfo() {
             const hostnameParts = window.location.hostname.split(".");
@@ -381,13 +544,19 @@
                 const markdown = await response.text();
                 viewerIntro.hidden = true;
                 viewerStatus.innerHTML = "Stai leggendo: <strong>" + path + "</strong>";
-                viewer.innerHTML = marked.parse(markdown);
+                viewer.innerHTML = renderMarkdown(markdown);
                 window.location.hash = "md=" + encodeURIComponent(path);
             } catch (error) {
                 viewerIntro.hidden = true;
                 viewerStatus.textContent = error.message;
                 viewer.innerHTML = "";
             }
+        }
+
+        for (const button of document.querySelectorAll("[data-md-path]")) {
+            button.addEventListener("click", () => {
+                loadMarkdown(button.dataset.mdPath);
+            });
         }
 
         loadRepositoryContents();
