@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueJS - Simulatore Didattico OOP</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --panel-bg: #ffffff;
+            --bluej-orange: #f39c12;
+            --bluej-blue: #3498db;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+
+        #main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        /* Area di Progetto (Stile BlueJ) */
+        #project-space {
+            flex: 2;
+            background-color: #eaeaea;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diagram-area {
+            flex: 2;
+            border: 1px dashed #95a5a6;
+            background-color: #fafafa;
+            border-radius: 6px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .class-box {
+            width: 120px;
+            height: 80px;
+            background: linear-gradient(135deg, #fff2cc, #fcd975);
+            border: 2px solid #b45f06;
+            border-radius: 4px;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 3px 3px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        /* Banco degli Oggetti (Object Bench) */
+        #object-bench {
+            flex: 1;
+            background-color: #d5dbdb;
+            border-top: 3px double #7f8c8d;
+            padding: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            overflow-x: auto;
+            min-height: 100px;
+        }
+
+        .object-red-canvas {
+            display: inline-block;
+            width: 100px;
+            height: 60px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border-radius: 6px;
+            padding: 5px;
+            font-size: 0.8rem;
+            cursor: context-menu;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        /* Pannello di Controllo e Ispezione */
+        #sidebar {
+            flex: 1;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        /* Menu contestuale simulato */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 100;
+            list-style: none;
+            padding: 5px 0;
+            margin: 0;
+            border-radius: 4px;
+        }
+
+        .context-menu li {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        .context-menu li:hover {
+            background-color: #3498db;
+            color: white;
+        }
+
+        /* Schermo di output (Il Canvas del Mondo) */
+        #world-display {
+            width: 100%;
+            height: 200px;
+            background-color: #222;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visual-object {
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        .inspector-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .inspector-table th, .inspector-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BlueJS — L'approccio "Objects First" in JavaScript</h1>
+        <div>Esercizio 1: Il cerchio magico</div>
+    </header>
+
+    <div id="main-container">
+        <div id="project-space">
+            <h4 style="margin:0 0 10px 0;">Diagramma delle Classi (Fai click destro sulla classe per creare un oggetto)</h4>
+            <div class="diagram-area">
+                <div class="class-box" id="class-circle" onclick="showClassMenu(event)">
+                    Circle
+                </div>
+            </div>
+            
+            <h4 style="margin:0 0 5px 0;">Banco degli Oggetti (Object Bench)</h4>
+            <div id="object-bench">
+                </div>
+        </div>
+
+        <div id="sidebar">
+            <h3>Visualizzazione Mondo</h3>
+            <div id="world-display"></div>
+
+            <h3>Ispettore Oggetto</h3>
+            <div id="inspector">
+                <p style="color: #7f8c8d; font-style: italic;">Seleziona un oggetto dal banco per ispezionare il suo stato.</p>
+            </div>
+        </div>
+    </div>
+
+    <ul id="class-menu" class="context-menu">
+        <li onclick="createInstance()">new Circle()</li>
+    </ul>
+
+    <ul id="object-menu" class="context-menu">
+        <li onclick="invokeMethod('makeVisible')">makeVisible()</li>
+        <li onclick="invokeMethod('makeInvisible')">makeInvisible()</li>
+        <li onclick="invokeMethod('moveRight')">moveRight()</li>
+        <li onclick="invokeMethod('moveLeft')">moveLeft()</li>
+        <li onclick="invokeMethod('changeColor')">changeColor()</li>
+    </ul>
+
+    <script>
+        // Definizione interna della classe logica
+        class Circle {
+            constructor(name) {
+                this.name = name;
+                this.diameter = 40;
+                this.xPosition = 20;
+                this.yPosition = 60;
+                this.color = 'blue';
+                this.isVisible = false;
+            }
+            makeVisible() { this.isVisible = true; }
+            makeInvisible() { this.isVisible = false; }
+            moveRight() { this.xPosition += 30; }
+            moveLeft() { this.xPosition -= 30; }
+            changeColor() {
+                const colors = ['blue', 'red', 'green', 'yellow', 'magenta'];
+                let nextIdx = (colors.indexOf(this.color) + 1) % colors.length;
+                this.color = colors[nextIdx];
+            }
+        }
+
+        // Stato dell'applicazione
+        const instances = {};
+        let objectCounter = 1;
+        let selectedObjectName = null;
+
+        // Gestione Menu Classi
+        function showClassMenu(e) {
+            e.preventDefault();
+            const menu = document.getElementById('class-menu');
+            menu.style.display = 'block';
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            e.stopPropagation();
+        }
+
+        function createInstance() {
+            const name = `circle${objectCounter++}`;
+            instances[name] = new Circle(name);
+            renderObjectBench();
+            updateWorld();
+            hideMenus();
+        }
+
+        // Renderizzare il banco degli oggetti
+        function renderObjectBench() {
+            const bench = document.getElementById('object-bench');
+            bench.innerHTML = '';
+            for (let key in instances) {
+                const div = document.createElement('div');
+                div.className = 'object-red-canvas';
+                div.innerText = `${key}: Circle`;
+                div.oncontextmenu = (e) => showObjectMenu(e, key);
+                div.onclick = () => inspectObject(key);
+                bench.appendChild(div);
+            }
+        }
+
+        function showObjectMenu(e, objName) {
+            e.preventDefault();
+            selectedObjectName = objName;
+            const menu = document.getElementById('object-menu');
+            menu.style.display = 'block';
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            e.stopPropagation();
+        }
+
+        function invokeMethod(methodName) {
+            if (selectedObjectName && instances[selectedObjectName]) {
+                instances[selectedObjectName][methodName]();
+                updateWorld();
+                inspectObject(selectedObjectName);
+            }
+            hideMenus();
+        }
+
+        function inspectObject(name) {
+            selectedObjectName = name;
+            const obj = instances[name];
+            const inspector = document.getElementById('inspector');
+            if(!obj) return;
+
+            let html = `<strong>Oggetto:</strong> ${obj.name}<br><br>`;
+            html += `<table class="inspector-table">
+                <tr><th>Campo (Stato)</th><th>Valore</th></tr>
+                <tr><td>diameter</td><td>${obj.diameter}</td></tr>
+                <tr><td>xPosition</td><td>${obj.xPosition}</td></tr>
+                <tr><td>yPosition</td><td>${obj.yPosition}</td></tr>
+                <tr><td>color</td><td><span style="color:${obj.color}">●</span> ${obj.color}</td></tr>
+                <tr><td>isVisible</td><td>${obj.isVisible}</td></tr>
+            </table>`;
+            inspector.innerHTML = html;
+        }
+
+        function updateWorld() {
+            const world = document.getElementById('world-display');
+            world.innerHTML = '';
+            for (let key in instances) {
+                const obj = instances[key];
+                if (obj.isVisible) {
+                    const el = document.createElement('div');
+                    el.className = 'visual-object';
+                    el.style.width = `${obj.diameter}px`;
+                    el.style.height = `${obj.diameter}px`;
+                    el.style.backgroundColor = obj.color;
+                    el.style.borderRadius = '50%';
+                    el.style.left = `${obj.xPosition}px`;
+                    el.style.top = `${obj.yPosition}px`;
+                    world.appendChild(el);
+                }
+            }
+        }
+
+        function hideMenus() {
+            document.getElementById('class-menu').style.display = 'none';
+            document.getElementById('object-menu').style.display = 'none';
+        }
+
+        window.onclick = hideMenus;
+    </script>
+</body>
+</html>
