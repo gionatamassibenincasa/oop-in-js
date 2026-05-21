@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>oop-in-js</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --border: #dbe3f0;
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        header {
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 320px) 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .content-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .content-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .content-item h3 {
+            margin: 0 0 6px;
+            font-size: 1rem;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin: 0 0 10px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        a,
+        button {
+            font: inherit;
+        }
+
+        a.link-button,
+        button.link-button {
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 8px 14px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        a.secondary-link {
+            color: var(--accent);
+            text-decoration: none;
+            align-self: center;
+        }
+
+        #viewer-intro {
+            color: var(--muted);
+        }
+
+        #viewer-status {
+            margin-bottom: 16px;
+            color: var(--muted);
+        }
+
+        #markdown-viewer {
+            line-height: 1.7;
+        }
+
+        #markdown-viewer :first-child {
+            margin-top: 0;
+        }
+
+        #markdown-viewer table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        #markdown-viewer th,
+        #markdown-viewer td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        #markdown-viewer code {
+            background: #eef2ff;
+            border-radius: 4px;
+            padding: 0.12em 0.35em;
+        }
+
+        #markdown-viewer pre {
+            background: #111827;
+            color: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        #markdown-viewer blockquote {
+            border-left: 4px solid var(--accent);
+            margin: 16px 0;
+            padding: 4px 0 4px 16px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 850px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>oop-in-js</h1>
+            <p class="subtitle">Indice del materiale pubblicato su GitHub Pages.</p>
+        </header>
+
+        <div class="layout">
+            <section class="panel" aria-labelledby="content-title">
+                <div class="panel-header">
+                    <h2 id="content-title">Contenuti disponibili</h2>
+                </div>
+                <div class="panel-body">
+                    <p id="content-status" class="meta">Caricamento dei contenuti del repository...</p>
+                    <ul id="content-list" class="content-list"></ul>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="viewer-title">
+                <div class="panel-header">
+                    <h2 id="viewer-title">Lettore Markdown</h2>
+                </div>
+                <div class="panel-body">
+                    <p id="viewer-intro">Seleziona un file Markdown dalla lista per leggerlo direttamente qui.</p>
+                    <div id="viewer-status" aria-live="polite"></div>
+                    <article id="markdown-viewer"></article>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const contentList = document.getElementById("content-list");
+        const contentStatus = document.getElementById("content-status");
+        const viewer = document.getElementById("markdown-viewer");
+        const viewerIntro = document.getElementById("viewer-intro");
+        const viewerStatus = document.getElementById("viewer-status");
+        const fallbackFiles = [
+            "es_1/index.html",
+            "es_1/esercizio.md"
+        ];
+
+        function getRepositoryInfo() {
+            const hostnameParts = window.location.hostname.split(".");
+            const pathParts = window.location.pathname.split("/").filter(Boolean);
+
+            if (hostnameParts.length >= 3 && hostnameParts[1] === "github" && hostnameParts[2] === "io" && pathParts.length >= 1) {
+                return {
+                    owner: hostnameParts[0],
+                    repo: pathParts[0]
+                };
+            }
+
+            return {
+                owner: "gionatamassibenincasa",
+                repo: "oop-in-js"
+            };
+        }
+
+        function normalizeEntries(paths) {
+            const entries = new Map();
+
+            for (const path of paths) {
+                if (path === "index.html") {
+                    continue;
+                }
+
+                const parts = path.split("/");
+                const fileName = parts[parts.length - 1];
+                const directory = parts.length > 1 ? parts.slice(0, -1).join("/") : ".";
+
+                if (!entries.has(directory)) {
+                    entries.set(directory, {
+                        directory,
+                        html: null,
+                        markdown: []
+                    });
+                }
+
+                const entry = entries.get(directory);
+
+                if (fileName === "index.html") {
+                    entry.html = path;
+                } else if (fileName.endsWith(".md")) {
+                    entry.markdown.push(path);
+                }
+            }
+
+            return Array.from(entries.values()).sort((a, b) => a.directory.localeCompare(b.directory));
+        }
+
+        function renderContentList(paths) {
+            const entries = normalizeEntries(paths).filter((entry) => entry.html || entry.markdown.length > 0);
+            contentList.innerHTML = "";
+
+            if (entries.length === 0) {
+                contentStatus.textContent = "Nessun contenuto HTML o Markdown trovato.";
+                return;
+            }
+
+            contentStatus.textContent = "Contenuti individuati automaticamente nel repository.";
+
+            for (const entry of entries) {
+                const item = document.createElement("li");
+                item.className = "content-item";
+
+                const title = document.createElement("h3");
+                title.textContent = entry.directory === "." ? "Root" : entry.directory;
+                item.appendChild(title);
+
+                const meta = document.createElement("p");
+                meta.className = "meta";
+                meta.textContent = [
+                    entry.html ? "Pagina HTML disponibile" : null,
+                    entry.markdown.length > 0 ? entry.markdown.length + " file Markdown" : null
+                ].filter(Boolean).join(" • ");
+                item.appendChild(meta);
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                if (entry.html) {
+                    const htmlLink = document.createElement("a");
+                    htmlLink.className = "link-button";
+                    htmlLink.href = "./" + entry.html;
+                    htmlLink.textContent = "Apri pagina HTML";
+                    actions.appendChild(htmlLink);
+                }
+
+                for (const markdownPath of entry.markdown) {
+                    const button = document.createElement("button");
+                    button.className = "link-button";
+                    button.type = "button";
+                    button.dataset.mdPath = "./" + markdownPath;
+                    button.textContent = "Leggi " + markdownPath.split("/").pop();
+                    button.addEventListener("click", () => {
+                        loadMarkdown(button.dataset.mdPath);
+                    });
+                    actions.appendChild(button);
+
+                    const sourceLink = document.createElement("a");
+                    sourceLink.className = "secondary-link";
+                    sourceLink.href = "./" + markdownPath;
+                    sourceLink.textContent = "Apri .md originale";
+                    actions.appendChild(sourceLink);
+                }
+
+                item.appendChild(actions);
+                contentList.appendChild(item);
+            }
+        }
+
+        async function loadRepositoryContents() {
+            const repository = getRepositoryInfo();
+            const apiUrl = "https://api.github.com/repos/" + repository.owner + "/" + repository.repo + "/git/trees/main?recursive=1";
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error("Impossibile leggere l'albero del repository da GitHub.");
+                }
+
+                const data = await response.json();
+                const paths = data.tree
+                    .filter((entry) => entry.type === "blob")
+                    .map((entry) => entry.path)
+                    .filter((path) => path.endsWith("/index.html") || path.endsWith(".md") || path === "index.html");
+
+                renderContentList(paths);
+            } catch (error) {
+                contentStatus.textContent = error.message + " Uso l'elenco locale di fallback.";
+                renderContentList(fallbackFiles);
+            }
+        }
+
+        async function loadMarkdown(path) {
+            viewerStatus.textContent = "Caricamento in corso...";
+            viewer.innerHTML = "";
+
+            try {
+                const response = await fetch(path);
+                if (!response.ok) {
+                    throw new Error("Impossibile leggere il file richiesto.");
+                }
+
+                const markdown = await response.text();
+                viewerIntro.hidden = true;
+                viewerStatus.innerHTML = "Stai leggendo: <strong>" + path + "</strong>";
+                viewer.innerHTML = marked.parse(markdown);
+                window.location.hash = "md=" + encodeURIComponent(path);
+            } catch (error) {
+                viewerIntro.hidden = true;
+                viewerStatus.textContent = error.message;
+                viewer.innerHTML = "";
+            }
+        }
+
+        loadRepositoryContents();
+
+        if (window.location.hash.startsWith("#md=")) {
+            const path = decodeURIComponent(window.location.hash.slice(4));
+            if (path) {
+                loadMarkdown(path);
+            }
+        }
+    </script>
+</body>
+</html>
