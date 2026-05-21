@@ -22,7 +22,8 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: 95vh;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         header {
@@ -43,6 +44,7 @@
             flex: 1;
             gap: 20px;
             overflow: hidden;
+            min-height: 0;
         }
 
         /* Area di Progetto (Stile BlueJ) */
@@ -55,10 +57,12 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .diagram-area {
             flex: 2;
+            min-height: 320px;
             border: 1px dashed #95a5a6;
             background-color: #fafafa;
             border-radius: 6px;
@@ -120,7 +124,28 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            overflow-y: auto;
+            overflow: hidden;
+            min-width: 340px;
+            min-height: 0;
+        }
+
+        .sidebar-section {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .sidebar-section h3 {
+            margin: 0;
+        }
+
+        .details-section {
+            flex: 1;
         }
 
         /* Menu contestuale simulato */
@@ -150,11 +175,14 @@
         /* Schermo di output (Il Canvas del Mondo) */
         #world-display {
             width: 100%;
-            height: 200px;
+            height: 240px;
+            min-height: 240px;
+            max-height: 240px;
             background-color: #222;
             border-radius: 6px;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .visual-object {
@@ -171,6 +199,59 @@
             border: 1px solid #ddd;
             padding: 6px;
             text-align: left;
+        }
+
+        #inspector, #json-viewer {
+            flex: 1;
+            min-height: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        #json-viewer {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+
+        #console-panel {
+            margin-top: 20px;
+            background-color: #111827;
+            color: #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 160px;
+        }
+
+        #console-panel h3 {
+            margin: 0 0 10px 0;
+        }
+
+        #console-output {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .console-entry {
+            border-left: 3px solid var(--bluej-blue);
+            padding-left: 10px;
+            white-space: pre-wrap;
+        }
+
+        .console-time {
+            color: #93c5fd;
+            margin-right: 8px;
         }
     </style>
 </head>
@@ -196,15 +277,29 @@
         </div>
 
         <div id="sidebar">
-            <h3>Visualizzazione Mondo</h3>
-            <div id="world-display"></div>
+            <div class="sidebar-section">
+                <h3>Visualizzazione Mondo</h3>
+                <div id="world-display"></div>
+            </div>
 
-            <h3>Ispettore Oggetto</h3>
-            <div id="inspector">
-                <p style="color: #7f8c8d; font-style: italic;">Seleziona un oggetto dal banco per ispezionare il suo stato.</p>
+            <div class="sidebar-section details-section">
+                <h3>Ispettore Oggetto</h3>
+                <div id="inspector">
+                    <p style="color: #7f8c8d; font-style: italic;">Seleziona un oggetto dal banco per ispezionare il suo stato.</p>
+                </div>
+            </div>
+
+            <div class="sidebar-section details-section">
+                <h3>JSON Oggetto</h3>
+                <pre id="json-viewer">Seleziona un oggetto dal banco per visualizzarne il JSON.</pre>
             </div>
         </div>
     </div>
+
+    <section id="console-panel">
+        <h3>Console eventi</h3>
+        <div id="console-output"></div>
+    </section>
 
     <ul id="class-menu" class="context-menu">
         <li onclick="createInstance()">new Circle()</li>
@@ -244,6 +339,24 @@
         const instances = {};
         let objectCounter = 1;
         let selectedObjectName = null;
+        const consoleEntries = [];
+
+        function logEvent(message) {
+            consoleEntries.push({
+                time: new Date().toLocaleTimeString('it-IT'),
+                message
+            });
+
+            if (consoleEntries.length > 50) {
+                consoleEntries.shift();
+            }
+
+            const consoleOutput = document.getElementById('console-output');
+            consoleOutput.innerHTML = consoleEntries.map((entry) =>
+                `<div class="console-entry"><span class="console-time">[${entry.time}]</span>${entry.message}</div>`
+            ).join('');
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
 
         // Gestione Menu Classi
         function showClassMenu(e) {
@@ -260,6 +373,8 @@
             instances[name] = new Circle(name);
             renderObjectBench();
             updateWorld();
+            inspectObject(name);
+            logEvent(`Creato ${name} come istanza di Circle.`);
             hideMenus();
         }
 
@@ -292,6 +407,7 @@
                 instances[selectedObjectName][methodName]();
                 updateWorld();
                 inspectObject(selectedObjectName);
+                logEvent(`Invocato ${selectedObjectName}.${methodName}().`);
             }
             hideMenus();
         }
@@ -300,6 +416,7 @@
             selectedObjectName = name;
             const obj = instances[name];
             const inspector = document.getElementById('inspector');
+            const jsonViewer = document.getElementById('json-viewer');
             if(!obj) return;
 
             let html = `<strong>Oggetto:</strong> ${obj.name}<br><br>`;
@@ -312,6 +429,7 @@
                 <tr><td>isVisible</td><td>${obj.isVisible}</td></tr>
             </table>`;
             inspector.innerHTML = html;
+            jsonViewer.textContent = JSON.stringify(obj, null, 2);
         }
 
         function updateWorld() {
@@ -339,6 +457,7 @@
         }
 
         window.onclick = hideMenus;
+        logEvent('Simulatore pronto.');
     </script>
 </body>
 </html>
